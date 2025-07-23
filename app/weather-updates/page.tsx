@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, CloudRain, Sun } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, CloudRain } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -13,6 +13,7 @@ export default function WeatherUpdatesPage() {
   const [yesterday, setYesterday] = useState<any>({});
   const [forecast, setForecast] = useState<any[]>([]);
   const [graphData, setGraphData] = useState<any[]>([]);
+  const [location, setLocation] = useState<string>('Loading...');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,27 +22,28 @@ export default function WeatherUpdatesPage() {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,relative_humidity_2m,precipitation&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&past_days=1&forecast_days=6&timezone=auto`;
 
       try {
+        // Get location name
+        const locRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+        const locData = await locRes.json();
+        setLocation(locData.address.city || locData.address.town || locData.address.village || locData.address.state || 'Unknown');
+
         const res = await fetch(url);
         const data = await res.json();
 
-        // Today’s data
         const now = new Date().getHours();
         setToday({
           current: data.hourly.temperature_2m[data.hourly.time.findIndex((t: string) => t.includes(`${now}:00`))],
           min: data.daily.temperature_2m_min[1],
           max: data.daily.temperature_2m_max[1],
-          rain: data.daily.precipitation_sum[1], // today
+          rain: data.daily.precipitation_sum[1],
         });
 
         setYesterday({
           min: data.daily.temperature_2m_min[0],
           max: data.daily.temperature_2m_max[0],
-          rain: data.daily.precipitation_sum[0], // yesterday
+          rain: data.daily.precipitation_sum[0],
         });
 
-
-
-        // Forecast next 5 days (from index 2 onwards)
         const upcoming = data.daily.time.slice(2).map((day: string, i: number) => ({
           date: day,
           min: data.daily.temperature_2m_min[i + 2],
@@ -50,7 +52,6 @@ export default function WeatherUpdatesPage() {
         }));
         setForecast(upcoming);
 
-        // Weather Graph data
         const hourly = data.hourly.time.map((time: string, i: number) => ({
           time: time.slice(5, 16),
           temperature: data.hourly.temperature_2m[i],
@@ -59,6 +60,7 @@ export default function WeatherUpdatesPage() {
         setGraphData(hourly);
       } catch (err) {
         console.error('Weather fetch failed:', err);
+        setLocation('Unavailable');
       } finally {
         setLoading(false);
       }
@@ -85,128 +87,133 @@ export default function WeatherUpdatesPage() {
           </div>
         </div>
       </header>
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-6 bg-gradient-to-br from-green-300 via-orange-200 via-yellow-100 to-blue-300"
->
+
+      <main className="max-w-4xl mx-auto px-4 py-8 space-y-2 bg-gradient-to-br from-green-300 via-orange-200 via-yellow-100 to-blue-300">
+        <div className="w-full flex justify-center ">
+          <Card className="bg-gradient-to-r from-blue-400 to-blue-800 text-white shadow-md px-6 py-2 rounded-xl text-center">
+            <p className="text-sm text-white-600 font-semibold">Current Location:  <span className="text-green-400">{location}</span></p>
+          </Card>
+        </div>
         {/* Yesterday & Today Cards */}
         <div className="flex flex-col md:flex-row gap-4">
-        {/* Yesterday */}
-        <Card className="flex-1 bg-gradient-to-br from-sky-400 via-indigo-300 to-blue-500 text-white rounded-xl shadow-xl p-4 text-center relative overflow-hidden">
-          <CardHeader className="pb-2 relative z-10">
-            <p className="text-sm font-bold text-green-700">Yesterday</p>
-            <CardTitle className="text-lg font-bold text-green-900">
-              {new Date(Date.now() - 86400000).toLocaleDateString(undefined, {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-              })}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-between text-2xl font-bold text-gray-700 px-6">
-              <div>
-                <p>Min</p>
-                <p>
-                  {yesterday.min}°C{' '}
-                  <span>
-                    {yesterday.rain > 2
-                      ? '🌧️'
-                      : yesterday.min >= 30
-                      ? '☀️'
-                      : '☁️'}
-                  </span>
-                </p>
+          {/* Yesterday */}
+          <Card className="flex-1 bg-gradient-to-br from-sky-400 via-indigo-300 to-blue-500 text-white rounded-xl shadow-xl p-4 text-center relative overflow-hidden">
+            <CardHeader className="pb-2 relative z-10">
+              <p className="text-sm font-bold text-green-700">Yesterday</p>
+              <CardTitle className="text-lg font-bold text-green-900">
+                {new Date(Date.now() - 86400000).toLocaleDateString(undefined, {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between text-2xl font-bold text-gray-700 px-6">
+                <div>
+                  <p>Min</p>
+                  <p>
+                    {yesterday.min}°C{' '}
+                    <span>
+                      {yesterday.rain > 2
+                        ? '🌧️'
+                        : yesterday.min >= 30
+                        ? '☀️'
+                        : '☁️'}
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <p>Max</p>
+                  <p>
+                    {yesterday.max}°C{' '}
+                    <span>
+                      {yesterday.rain > 2
+                        ? '🌧️'
+                        : yesterday.max >= 30
+                        ? '☀️'
+                        : '☁️'}
+                    </span>
+                  </p>
+                </div>
               </div>
-              <div>
-                <p>Max</p>
-                <p>
-                  {yesterday.max}°C{' '}
-                  <span>
-                    {yesterday.rain > 2
-                      ? '🌧️'
-                      : yesterday.max >= 30
-                      ? '☀️'
-                      : '☁️'}
-                  </span>
-                </p>
-              </div>
-            </div>
-            <b><p className="mt-2 text-sm text-gray-600">
-              {yesterday.rain > 2
-                ? 'Rainy'
-                : yesterday.max >= 30
-                ? 'Sunny'
-                : 'Cloudy'}
-            </p></b>
-          </CardContent>
-        </Card>
+              <b><p className="mt-2 text-sm font-extrabold text-gray-600">
+                {yesterday.rain > 2
+                  ? 'Rainy'
+                  : yesterday.max >= 30
+                  ? 'Sunny'
+                  : 'Cloudy'}
+              </p></b>
+            </CardContent>
+          </Card>
 
-        {/* Today */}
-        <Card className="flex-1 bg-gradient-to-br from-sky-400 via-indigo-300 to-blue-500 text-white rounded-xl shadow-xl p-4 text-center relative overflow-hidden">
-          <CardHeader className="pb-2 relative z-10">
-            <p className="text-sm font-bold text-green-700">Today</p>
-            <CardTitle className="text-lg font-bold text-green-900">
-              {new Date().toLocaleDateString(undefined, {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-              })}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-between text-2xl font-bold text-gray-700 px-4">
-              <div>
-                <p>Min</p>
-                <p>
-                  {today.min}°C{' '}
-                  <span>
-                    {today.rain > 2
-                      ? '🌧️'
-                      : today.min >= 30
-                      ? '☀️'
-                      : '☁️'}
-                  </span>
-                </p>
+          {/* Today */}
+          <Card className="flex-1 bg-gradient-to-br from-sky-400 via-indigo-300 to-blue-500 text-white rounded-xl shadow-xl p-4 text-center relative overflow-hidden">
+            <CardHeader className="pb-2 relative z-10">
+    
+              <p className="text-sm font-bold text-green-700">Today</p>
+              <CardTitle className="text-lg font-bold text-green-900">
+                {new Date().toLocaleDateString(undefined, {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between text-2xl font-bold text-gray-700 px-4">
+                <div>
+                  <p>Min</p>
+                  <p>
+                    {today.min}°C{' '}
+                    <span>
+                      {today.rain > 2
+                        ? '🌧️'
+                        : today.min >= 30
+                        ? '☀️'
+                        : '☁️'}
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <p className="text-orange-600">Now</p>
+                  <p className="text-orange-500">
+                    {today.current}°C{' '}
+                    <span>
+                      {today.rain > 2
+                        ? '🌧️'
+                        : today.current >= 30
+                        ? '☀️'
+                        : '☁️'}
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <p>Max</p>
+                  <p>
+                    {today.max}°C{' '}
+                    <span>
+                      {today.rain > 2
+                        ? '🌧️'
+                        : today.max >= 30
+                        ? '☀️'
+                        : '☁️'}
+                    </span>
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-orange-600">Now</p>
-                <p className="text-orange-500">
-                  {today.current}°C{' '}
-                  <span>
-                    {today.rain > 2
-                      ? '🌧️'
-                      : today.current >= 30
-                      ? '☀️'
-                      : '☁️'}
-                  </span>
-                </p>
-              </div>
-              <div>
-                <p>Max</p>
-                <p>
-                  {today.max}°C{' '}
-                  <span>
-                    {today.rain > 2
-                      ? '🌧️'
-                      : today.max >= 30
-                      ? '☀️'
-                      : '☁️'}
-                  </span>
-                </p>
-              </div>
-            </div>
-            <b><p className="mt-1 text-sm text-gray-600">
-              {today.rain > 2
-                ? 'Rainy'
-                : today.current >= 30
-                ? 'Sunny'
-                : 'Cloudy'}
-            </p></b>
-          </CardContent>
-        </Card>
-      </div>
-
+              <b><p className="mt-1 text-sm font-extrabold text-gray-600">
+                {today.rain > 2
+                  ? 'Rainy'
+                  : today.current >= 30
+                  ? 'Sunny'
+                  : 'Cloudy'}
+              </p></b>
+            </CardContent>
+          </Card>
+        </div>
 
 
 
