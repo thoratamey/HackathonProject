@@ -91,7 +91,7 @@ export default function WeatherUpdatesPage() {
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-2 bg-gradient-to-br from-green-300 via-orange-200 via-yellow-100 to-blue-300">
         <div className="w-full flex justify-center ">
           <Card className="bg-gradient-to-r from-blue-400 to-blue-800 text-white shadow-md px-6 py-2 rounded-xl text-center">
-            <p className="text-sm text-white-600 font-semibold">Current Location:  <span className="text-green-400">{location}</span></p>
+            <b><p className="text-xl text-white-1000 font-semibold">Current Location:  <span className="text-green-400">{location}</span></p></b>
           </Card>
         </div>
         {/* Yesterday & Today Cards */}
@@ -99,7 +99,7 @@ export default function WeatherUpdatesPage() {
           {/* Yesterday */}
           <Card className="flex-1 bg-gradient-to-br from-sky-400 via-indigo-300 to-blue-500 text-white rounded-xl shadow-xl p-4 text-center relative overflow-hidden">
             <CardHeader className="pb-2 relative z-10">
-              <p className="text-sm font-bold text-green-700">Yesterday</p>
+              <p className="text-xl font-bold text-green-700">Yesterday</p>
               <CardTitle className="text-lg font-bold text-green-900">
                 {new Date(Date.now() - 86400000).toLocaleDateString(undefined, {
                   weekday: 'long',
@@ -138,7 +138,7 @@ export default function WeatherUpdatesPage() {
                   </p>
                 </div>
               </div>
-              <b><p className="mt-2 text-sm font-extrabold text-gray-600">
+              <b><p className="mt-2 text-lg font-extrabold text-gray-600">
                 {yesterday.rain > 2
                   ? 'Rainy'
                   : yesterday.max >= 30
@@ -152,7 +152,7 @@ export default function WeatherUpdatesPage() {
           <Card className="flex-1 bg-gradient-to-br from-sky-400 via-indigo-300 to-blue-500 text-white rounded-xl shadow-xl p-4 text-center relative overflow-hidden">
             <CardHeader className="pb-2 relative z-10">
     
-              <p className="text-sm font-bold text-green-700">Today</p>
+              <p className="text-xl font-bold text-green-700">Today</p>
               <CardTitle className="text-lg font-bold text-green-900">
                 {new Date().toLocaleDateString(undefined, {
                   weekday: 'long',
@@ -204,7 +204,7 @@ export default function WeatherUpdatesPage() {
                   </p>
                 </div>
               </div>
-              <b><p className="mt-1 text-sm font-extrabold text-gray-600">
+              <b><p className="mt-1 text-lg font-extrabold text-gray-600">
                 {today.rain > 2
                   ? 'Rainy'
                   : today.current >= 30
