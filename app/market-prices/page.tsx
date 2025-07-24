@@ -126,14 +126,12 @@ export default function MarketPricesPage() {
                 </div>
               </div>
             </div>
-            <Button 
-              onClick={handleRefresh} 
-              disabled={isRefreshing}
-              className="bg-gradient-to-r from-green-600 to-orange-500 hover:from-green-700 hover:to-orange-600 text-white shadow-lg"
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
+            <Link href="/price-analysis">
+              <Button className="bg-gradient-to-r from-green-600 to-orange-500 hover:from-green-700 hover:to-orange-600 text-white shadow-lg">
+                Ask your Question related to crop price
+              </Button>
+            </Link>
+
           </div>
         </div>
       </header>
